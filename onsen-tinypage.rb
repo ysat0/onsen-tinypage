@@ -3,7 +3,7 @@
 require 'open-uri'
 require 'rexml/document'
 
-W=Array["月","火","水","木","金"]
+W = Array["月曜日","火曜日","水曜日","木曜日","金曜日"]
 
 def get_xml(wday)
   xml = nil
@@ -17,9 +17,9 @@ def get_xml(wday)
   return xml
 end
 
-html = <<HTML
-Content-Type: text/html; charset=utf-8
+html = (ENV['REQUEST_METHOD']) ? "Content-Type: text/html; charset=utf-8\n\n" : ""
 
+html << <<HTML
 <HTML>
 <HEAD>
 <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -28,8 +28,14 @@ Content-Type: text/html; charset=utf-8
 <BODY bgcolor=green text=white>
 HTML
 
+html << "<TABLE><TR>"
 1.upto(5) { |wday|
-  html << "<A NAME=\"#{wday}\"><H3>#{W[(wday -1)]}曜日</H3></A><TABLE border=1 bordercolor=white rules=all width=100%>"
+  html << "<TD><A href=\"##{wday}\">#{W[wday -1]}</A></TD>"
+}
+html << "</TR></TABLE>\n"
+
+1.upto(5) { |wday|
+  html << "<A NAME=\"#{wday}\"><H3>#{W[wday -1]}</H3></A><TABLE border=1 bordercolor=white rules=all width=100%>"
   data = REXML::Document.new(get_xml(wday))
   data.elements.each("data/regular/program") { |element|
     title = element.get_text("title")
@@ -58,4 +64,4 @@ ITEM
   html << "</TABLE>\n"
 }
 html << "</BODY></HTML>"
-print html
+puts html
