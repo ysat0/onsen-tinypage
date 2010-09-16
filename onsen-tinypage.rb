@@ -1,20 +1,24 @@
 #!/usr/bin/ruby -Kw
+# -*- coding: utf-8 -*-
 
 require 'open-uri'
 require 'rexml/document'
+require 'mechanize'
+require 'digest/md5'
+require 'date'
 
 W = Array["月曜日","火曜日","水曜日","木曜日","金曜日"]
+Now = DateTime.now
 
-def get_xml(wday)
+def get_xml(agent, wday)
+  code = Digest::MD5.hexdigest("onsen#{Now.wday}#{Now.day}#{Now.hour}")
   xml = nil
   begin
-    open("http://www.onsen.ag/data/regular_#{wday}.xml") { |io|
-      xml = io.read
-    }
+    xml = agent.post("http://onsen.ag/getXML.php", "code" => code, "file_name" => "regular_#{wday}")
   rescue
     retry
   end
-  return xml
+  return xml.body
 end
 
 html = (ENV['REQUEST_METHOD']) ? "Content-Type: text/html; charset=utf-8\n\n" : ""
@@ -34,9 +38,12 @@ html << "<TABLE><TR>"
 }
 html << "</TR></TABLE>\n"
 
+agent = Mechanize.new
+agent.get("http://onsen.ag")
+
 1.upto(5) { |wday|
   html << "<A NAME=\"#{wday}\"><H3>#{W[wday -1]}</H3></A><TABLE border=1 bordercolor=white rules=all width=100%>"
-  data = REXML::Document.new(get_xml(wday))
+  data = REXML::Document.new(get_xml(agent, wday))
   data.elements.each("data/regular/program") { |element|
     title = element.get_text("title")
     header = element.get_text("titleHeader")
