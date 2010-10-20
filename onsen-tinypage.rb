@@ -49,9 +49,16 @@ agent.get("http://onsen.ag")
     header = element.get_text("titleHeader")
     image = element.get_text("imagePath")
     no = element.get_text("number").to_s.strip
-    detail = element.get_text("detailURL").to_s.strip
     update = element.get_text("isNew").to_s.to_i
-    content_url = element.get_text("contents/fileUrl").to_s.strip
+    detail = element.get_text("detailURL").to_s.strip
+    content_url = ""
+    element.each_element('contents') { |contents|
+      if contents.get_text("isAdvertize").to_s == '0' then
+        url = contents.get_text("fileUrl").to_s
+        next if url !~ /cm_onsen/
+        content_url = url.strip
+      end
+    }
     detail = "http://onsen.ag/program/#{header}/index.html" if detail.empty?
     play = (no.empty? || content_url.empty?) ? "" : "<A href=\"#{content_url}\"><INPUT type=\"submit\" value=\"第#{no}回を再生\"></A>"
     new = (update == 0) ? "" : "&nbsp;<FONT size=-1 color=red>new</FONT>"
